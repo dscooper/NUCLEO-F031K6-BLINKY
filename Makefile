@@ -13,12 +13,15 @@ CFLAGS		= -march=armv7-m
 CFLAGS 	 += -mcpu=cortex-m3 
 CFLAGS 	 += -mthumb
 CFLAGS   += -std=gnu17
+CFLAGS   += -Wall
 
-#SRCFILES  = main.c
-#SRCFILES += led.c
-#
-#OBJFILES 	= $(BINDIR)main.o
-#OBJFILES += $(BINDIR)led.o
+SRCFILES  = main.c
+SRCFILES += led.c
+SRCFILES += startup_stm32f100rb.c
+
+OBJFILES 	= $(BINDIR)main.o
+OBJFILES += $(BINDIR)led.o
+OBJFILES += $(BINDIR)startup_stm32f100rb.o
 
 all: $(BINDIR) $(OBJFILES)
 
@@ -27,7 +30,7 @@ $(BINDIR) :
 	mkdir -p $(BINDIR)
 
 $(BINDIR)%o : $(SRCDIR)%c
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 #$(BINDIR)main.o	: main.c 
 #	$(CC) $(CFLAGS) -c $^ -o $@

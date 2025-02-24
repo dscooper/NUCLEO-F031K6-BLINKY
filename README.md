@@ -121,7 +121,7 @@ Contents of section .ARM.attributes:
  0020 01170318 0119011a 011e0622 01        ...........".   
 ~~~
 
-## Writing MCU startup file from scratch
+## Lecture 3 - Writing MCU startup file from scratch
 
 Bare metal embedded lecture-3: Writing MCU startup file from scratch<br>
 https://www.youtube.com/watch?v=2Hm8eEHsgls&t=69s
@@ -140,9 +140,39 @@ has one. More importantly, the startup code is responsible for the initializatio
 of the stack, variables that are assigned values, static constructors and
 anything that is expected to be initialized before **main()** is called.
 
+This project differs from the Fastbit Academy code in that a STM32F100RB
+microprocessor is used. The examples are developed on the STM32 Value Line
+Discovery board[^1]. That development board has the following features:
 
+- STM32F100RBT6B microcontroller with 
+  - 128 KB Flash memory 
+  - 8 KB RAM in 64-pin LQFP
+  - ARM Cortex-M3 (ARMv7-M)
+- Memory Map
+  - Flash:
+      0x08000000 - 0x0801FFFF  (32768 words = 131072 bytes)
+  - SRAM:
+      0x20000000 - 0x20002000  ( 2048 words =   8192 bytes)
 
+Refer to the STM32F100xx Reference Manual (RM0041) for more information.
 
+### Interrupts and Exceptions
+
+There are 41 maskable interrupts on the SMR32F100RB. It is important to note
+that the reference manual lists all 60 in the chapter on interrupts but that is
+for the high density devices with flash memories between 256 and 512 Kbytes.
+
+The STM32F100RB is a Medium-density value line device so only has 41; no DMA2
+and only about half (7) of the timers available on the larger devices. The
+available interrupts can be figured out by looking at the appropriate data sheet,
+in this case for the low and medium-density value line device (e.g., STM21F100RB),
+block diagram and see what is implemented. One could also jus get the startup
+file for the device and copy that. 
+
+## Lecture 4 - Writing linker scripts and section placement
+
+Bare metal embedded lecture-4: Writing linker scripts and section placement<br>
+https://www.youtube.com/watch?v=B7oKdUvRhQQ&t=33s
 
 
 
@@ -199,7 +229,7 @@ In this case that would be the ARM gcc compiler supplied by ST.
 arm-none-eabi-gcc -march=armv7-m -mcpu=cortex-m3 -mthumb -c main.c -o main.o
 ~~~
 
-Consult the document ***Using the GNU Compiler Collection***[^1] for the
+Consult the document ***Using the GNU Compiler Collection***[^2] for the
 flags to use. In this case, because the target microprocessor is a 
 STM32F100R8, we use:
 
@@ -333,4 +363,5 @@ SYMBOL TABLE:
 ~~~
 
 <!-- Appendix -------------------------------------------------------------- -->
-[^1]: https://gcc.gnu.org/onlinedocs/
+[^1]: https://www.st.com/en/evaluation-tools/stm32vldiscovery.html
+[^2]: https://gcc.gnu.org/onlinedocs/
