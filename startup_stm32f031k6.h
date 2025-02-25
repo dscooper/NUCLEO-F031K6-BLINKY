@@ -1,5 +1,5 @@
 /**
- * @file        startup_stm32f100rb.h
+ * @file        startup_stm32f031k6.h
  * @author      your name (you@domain.com)
  * @brief 
  * @version     0.1
@@ -8,8 +8,8 @@
  * @copyright   Copyright (c) 2025
  * 
  */
-#ifndef STARTUP_STM32F100RB_H
-  #define   STARTUP_STM32F100RB_H
+#ifndef STARTUP_STM32F031K6_H
+  #define   STARTUP_STM32F031K6_H
 
 
   /**
@@ -25,4 +25,4 @@ void Reset_Handler(void);
  */
 void Default_Handler(void);
 
-#endif    // STARTUP_STM32F100RB_H
+#endif    // STARTUP_STM32F031K6_H

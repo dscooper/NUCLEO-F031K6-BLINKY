@@ -9,37 +9,46 @@ CC 				= $(TOOL)gcc
 BINDIR		= bin/
 SRCDIR		=
 
-CFLAGS		= -march=armv7-m 
-CFLAGS 	 += -mcpu=cortex-m3 
+CFLAGS		= -march=armv6-m 
+CFLAGS 	 += -mcpu=cortex-m0 
 CFLAGS 	 += -mthumb
 CFLAGS   += -std=gnu17
 CFLAGS   += -Wall
 
+LFLAGS    = -nostdlib
+LFLAGS   += -Tstm32f031k6.ld
+LFLAGS   += -Wl,-Map,$(BINDIR)test.map 
+
 SRCFILES  = main.c
 SRCFILES += led.c
-SRCFILES += startup_stm32f100rb.c
+SRCFILES += startup_stm32f031k6.c
 
-OBJFILES 	= $(BINDIR)main.o
+OBJFILES  = $(BINDIR)main.o
 OBJFILES += $(BINDIR)led.o
-OBJFILES += $(BINDIR)startup_stm32f100rb.o
+OBJFILES += $(BINDIR)startup_stm32f031k6.o
 
-all: $(BINDIR) $(OBJFILES)
+TARGET		= test.elf
+
+all: $(BINDIR) $(BINDIR)$(TARGET)
 
 # Rule to create build directory
 $(BINDIR) :
 	mkdir -p $(BINDIR)
 
-$(BINDIR)%o : $(SRCDIR)%c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(BINDIR)$(TARGET) : $(OBJFILES)
+	$(CC) $(LFLAGS) $(OBJFILES) -o $(BINDIR)$(TARGET)
 
-#$(BINDIR)main.o	: main.c 
-#	$(CC) $(CFLAGS) -c $^ -o $@
+$(BINDIR)main.o	: main.c 
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-#$(BINDIR)led.o	: led.c 
-#	$(CC) $(CFLAGS) -c $^ -o $@
+$(BINDIR)led.o	: led.c 
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(BINDIR)startup_stm32f031k6.o	: startup_stm32f031k6.c 
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 .PHONEY	: clean
 clean 	:
 	rm $(BINDIR)*.*
 
-# arm-none-eabi-gcc -march=armv7-m -mcpu=cortex-m3 -mthumb -std=gnu17 -S main.c -o main.S
+# arm-none-eabi-gcc -march=armv6-m -mcpu=cortex-m0 -mthumb -std=gnu17 -S main.c -o main.S

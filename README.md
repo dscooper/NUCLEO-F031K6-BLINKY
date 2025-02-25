@@ -127,9 +127,9 @@ Bare metal embedded lecture-3: Writing MCU startup file from scratch<br>
 https://www.youtube.com/watch?v=2Hm8eEHsgls&t=69s
 
 This lecture gets into the meat and potatoes of bare metal programming on ARM
-microprocessors with an excellent explanation of the start up file.
+microcontrollers with an excellent explanation of the start up file.
 
-This file, usually written in assembly, is supplied by the microprocessor 
+This file, usually written in assembly, is supplied by the microcontroller 
 vendor. One does not have to create them from scratch. However it is instructive
 to see how it's done and, more importantly, why.
 
@@ -141,7 +141,7 @@ of the stack, variables that are assigned values, static constructors and
 anything that is expected to be initialized before **main()** is called.
 
 This project differs from the Fastbit Academy code in that a STM32F100RB
-microprocessor is used. The examples are developed on the STM32 Value Line
+microcontroller is used. The examples are developed on the STM32 Value Line
 Discovery board[^1]. That development board has the following features:
 
 - STM32F100RBT6B microcontroller with 
@@ -169,12 +169,57 @@ in this case for the low and medium-density value line device (e.g., STM21F100RB
 block diagram and see what is implemented. One could also jus get the startup
 file for the device and copy that. 
 
+The important takeaways from this lecture are:
+
+1. Creating a function table (array) with an array member for each exception
+   and interrupt handler address.
+   - The array will be 'decorated' with an attribute that allows us to place the
+     array in the executable code section.
+   - 'reserved' interrupts in the vector table documentation need to be 
+     represented in the array by 0. The table layout must match the vector
+     table documentation. The (relative) addressing must be the same.
+   - For ARM Cortex-M devices, the first array member is the address of the top
+     of the stack. Initially this can be hardcoded but later a symbolic
+     address can be created by the linker script.
+2. Because not every interrupt handler will need to be implemented a 'dummy'
+   function is created for those handlers.
+   - Most all of the exception and interrupt handlers will be aliased to this
+     dummy function. Because the prototypes are attributed with 'weak' they
+     can be replaced later with our own handlers without changing the vector
+     table declaration.
+3. The **Reset_Handler**, the exception called at reset, needs to be implemented.
+   It will be responsible for initializing the microcontroller (clocks, etc),
+   .data and .bss segments in RAM.
+4. The **Dummy_Handler** needs to be implemented and can contain nothing more 
+   than an endless loop or more sophisticated error handling code.
+
+A brief example the the vector table follows. Note the use of attributes.
+
+~~~c
+// handler prototypes
+void NMI_Handler(void) __attribute__((weak, alias("Default_Handler")));
+void HardFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
+...
+
+// vector table
+uint32_t vectors[] __attribute__ ((section(".vector_tbl"))) = 
+{
+  (uint32_t)0x20002000,                                     /* 0x0000_0000    */
+  (uint32_t)&Reset_Handler,                                 /* 0x0000_0004    */
+  (uint32_t)&NMI_Handler,                                   /* 0x0000_0008    */
+...
+~~~
+
 ## Lecture 4 - Writing linker scripts and section placement
 
 Bare metal embedded lecture-4: Writing linker scripts and section placement<br>
 https://www.youtube.com/watch?v=B7oKdUvRhQQ&t=33s
 
 
+## Lecture 5 - Linking and analyzing memory map file
+
+Bare metal embedded lecture-5: Linking and analyzing memory map file
+https://www.youtube.com/watch?v=5aafG5mjZ_Y
 
 
 <!-- The older stuff ------------------------------------------------------- -->
@@ -230,7 +275,7 @@ arm-none-eabi-gcc -march=armv7-m -mcpu=cortex-m3 -mthumb -c main.c -o main.o
 ~~~
 
 Consult the document ***Using the GNU Compiler Collection***[^2] for the
-flags to use. In this case, because the target microprocessor is a 
+flags to use. In this case, because the target microcontroller is a 
 STM32F100R8, we use:
 
 <table>
