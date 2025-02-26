@@ -32,51 +32,85 @@ https://www.youtube.com/watch?v=Bsq6P1B8JqI
 - How to write makefiles (specifically for these examples)
 - How to analyze object files
 
+Note: the makefile for this project is slightly different than the one in the 
+video.
+
 ### objdump
 
-what follows are examples of how to use ***arm-none-eabi-objdump***. The online
+What follows are examples of how to use ***arm-none-eabi-objdump***. The online
 man page can be found [here](https://man7.org/linux/man-pages/man1/objdump.1.html).
 
 The main.c file, from which the following examples are based (i.e., main.o) 
-is below.
+is below. Note that this is not the same **main.c** that is presented in the 
+videos.
 
 ~~~c
+#include  <stdint.h>
 #include  "main.h"
+
+// .rodata section
+const uint32_t  c32var    = 4096;
+const uint16_t  c16var    = 1024;
+const uint8_t   c8var     = 128;
+
+// .data section
+volatile uint32_t v32var  = 4095;
+volatile uint16_t v16var  = 1023;
+volatile uint8_t  v8var   = 127;
+
+// .bss section
+uint32_t  tick_count      = 0;
 
 int main(void)
 {
-  while(1);
-  return 0;
+
+  v32var  = c32var;
+  v16var  = c16var;
+  v8var   = c8var;
+
+  while(1)
+  {
+    ;
+  }
+	return 0;
 } // main
 ~~~
 
-1. example of using -h to display the contents of the section headers.
+1. Example of using **-h** to display the contents of the section headers.
 
 ~~~
-$ arm-none-eabi-objdump -h bin/main.o 
+$ arm-none-eabi-objdump -h bin/main.o
 
 bin/main.o:     file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         00000006  00000000  00000000  00000034  2**1
-                  CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000000  00000000  00000000  0000003a  2**0
+  0 .text         0000002c  00000000  00000000  00000034  2**2
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  1 .data         00000007  00000000  00000000  00000060  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .bss          00000000  00000000  00000000  0000003a  2**0
+  2 .bss          00000004  00000000  00000000  00000068  2**2
                   ALLOC
-  3 .comment      00000044  00000000  00000000  0000003a  2**0
+  3 .rodata       00000007  00000000  00000000  00000068  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .comment      00000044  00000000  00000000  0000006f  2**0
                   CONTENTS, READONLY
-  4 .ARM.attributes 0000002d  00000000  00000000  0000007e  2**0
+  5 .ARM.attributes 0000002c  00000000  00000000  000000b3  2**0
                   CONTENTS, READONLY
 ~~~
 
-Because the file is so simple, there are no data in either the data (.data) or
-uninitialized data (.bss) segments their length is 0. The text segment only has
-6 bytes. This can be seen using the **-d** flag to disassemble the object file.
+Because the files are so simple, there are few data in either the data (.data) 
+or uninitialized data (.bss) segments. The .text segment only has 396 bytes,
+of which 192 bytes is the vector table.
+
+**arm-none-eabi-objdump** can be used to disassemble specific object files or
+the entire elf file. The latter gives more information about the variables
+defined in the files.
+
+The main.o file, edited for brevity.
 
 ~~~c
-$ arm-none-eabi-objdump -d bin/main.o 
+$ arm-none-eabi-objdump -d bin/main.o
 
 bin/main.o:     file format elf32-littlearm
 
@@ -84,21 +118,78 @@ bin/main.o:     file format elf32-littlearm
 Disassembly of section .text:
 
 00000000 <main>:
-   0:	b480      	push	{r7}
+   0:	b580      	push	{r7, lr}
    2:	af00      	add	r7, sp, #0
-   4:	e7fe      	b.n	4 <main+0x4>
+   4:	2380      	movs	r3, #128	@ 0x80
+   ...
+~~~
+
+The entire binary (*.elf), edited for brevity.
+
+~~~c
+$ arm-none-eabi-objdump -d bin/test.elf
+
+bin/test.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+08000000 <vectors>:
+ 8000000:	00 10 00 20 f9 00 00 08 7d 01 00 08 7d 01 00 08     ... ....}...}...
+	...
+
+080000c0 <main>:
+ 80000c0:	b580      	push	{r7, lr}
+ 80000c2:	af00      	add	r7, sp, #0
+ 80000c4:	2380      	movs	r3, #128	@ 0x80
+  ...
+ 80000e0:	20000000 	.word	0x20000000
+ 80000e4:	20000004 	.word	0x20000004
+ 80000e8:	20000006 	.word	0x20000006
+
+080000ec <init_led>:
+ 80000ec:	b580      	push	{r7, lr}
+ 80000ee:	af00      	add	r7, sp, #0
+ 80000f0:	46c0      	nop			@ (mov r8, r8)
+	...
+
+080000f8 <Reset_Handler>:
+ 80000f8:	b580      	push	{r7, lr}
+ 80000fa:	b086      	sub	sp, #24
+ 80000fc:	af00      	add	r7, sp, #0
+  ...
+ 8000168:	20000008 	.word	0x20000008
+ 800016c:	20000000 	.word	0x20000000
+ 8000170:	0800018c 	.word	0x0800018c
+ 8000174:	2000000c 	.word	0x2000000c
+ 8000178:	20000008 	.word	0x20000008
+
+0800017c <Default_Handler>:
+ 800017c:	b580      	push	{r7, lr}
+ 800017e:	af00      	add	r7, sp, #0
+ 8000180:	46c0      	nop			@ (mov r8, r8)
+ 8000182:	e7fd      	b.n	8000180 <Default_Handler+0x4>
+
+08000184 <c32var>:
+ 8000184:	1000 0000                                   ....
+
+08000188 <c16var>:
+ 8000188:	0400                                        ..
+
+0800018a <c8var>:
+ 800018a:	0080                                        ..
 ~~~
 
 Note that the **.comment** and **.ARM.attributes** sections do not contain
 executable code or program data, they hold version control information. These
-sections are added by the compiler.
+sections are added by the compiler, as are others.
 
 The sections can be examined by using the **-s** flag. This flag is used to 
 display the full contents of sections, often used in combination with **-j** to 
 request specific sections. 
 
 ~~~c
-$ arm-none-eabi-objdump -s -j .comment bin/main.o 
+$ arm-none-eabi-objdump -s -j .comment bin/test.elf 
 
 bin/main.o:     file format elf32-littlearm
 
@@ -111,7 +202,7 @@ Contents of section .comment:
 ~~~
 
 ~~~c
-$ arm-none-eabi-objdump -s -j .ARM.attributes bin/main.o 
+$ arm-none-eabi-objdump -s -j .ARM.attributes bin/test.elf
 
 bin/main.o:     file format elf32-littlearm
 
@@ -140,34 +231,35 @@ has one. More importantly, the startup code is responsible for the initializatio
 of the stack, variables that are assigned values, static constructors and
 anything that is expected to be initialized before **main()** is called.
 
-This project differs from the Fastbit Academy code in that a STM32F100RB
-microcontroller is used. The examples are developed on the STM32 Value Line
-Discovery board[^1]. That development board has the following features:
+This project differs from the Fastbit Academy code in that a STM32F031K6
+microcontroller is used here. The examples are developed on the STM32 Nucleo-32
+development board[^1]. That development board has the following features:
 
-- STM32F100RBT6B microcontroller with 
-  - 128 KB Flash memory 
-  - 8 KB RAM in 64-pin LQFP
-  - ARM Cortex-M3 (ARMv7-M)
+- STM32F031K6T6B microcontroller with 
+  - 32 KB Flash memory 
+  - 4 KB RAM in 64-pin LQFP
+  - ARM Cortex-M0 (ARMv6-M)
 - Memory Map
   - Flash:
-      0x08000000 - 0x0801FFFF  (32768 words = 131072 bytes)
+      0x08000000 - 0x08007FFF  (32768 bytes)
   - SRAM:
-      0x20000000 - 0x20002000  ( 2048 words =   8192 bytes)
+      0x20000000 - 0x20000FFF  (4096 bytes)
 
-Refer to the STM32F100xx Reference Manual (RM0041) for more information.
+Refer to the STM32F0x1 Reference Manual (RM0091) for more information.
 
 ### Interrupts and Exceptions
 
-There are 41 maskable interrupts on the SMR32F100RB. It is important to note
-that the reference manual lists all 60 in the chapter on interrupts but that is
-for the high density devices with flash memories between 256 and 512 Kbytes.
+There are 22 maskable interrupts on the SMR32F031K6. It is important to note
+that the reference manual lists all 32 in the chapter on interrupts but that is
+for the other devices in the STM32F0xx family. This does not include the first
+16 exceptions that are set aside for the ARM architecture.
 
-The STM32F100RB is a Medium-density value line device so only has 41; no DMA2
-and only about half (7) of the timers available on the larger devices. The
-available interrupts can be figured out by looking at the appropriate data sheet,
-in this case for the low and medium-density value line device (e.g., STM21F100RB),
-block diagram and see what is implemented. One could also jus get the startup
-file for the device and copy that. 
+The available interrupts can be figured out by looking at the appropriate data
+sheet block diagram and see what is implemented. One could also just get the
+startup file for the device and copy that.
+
+The **STM32CubeF0 CMSIS Device MCU Component** files, of which 
+**startup_stm32f031x6.s** is one, are available on GitHub [^2].
 
 The important takeaways from this lecture are:
 
@@ -222,89 +314,11 @@ Bare metal embedded lecture-5: Linking and analyzing memory map file
 https://www.youtube.com/watch?v=5aafG5mjZ_Y
 
 
+
+<!-- GitHub ---------------------------------------------------------------- -->
+git clone https://github.com/STMicroelectronics/cmsis-device-f0.git
+
 <!-- The older stuff ------------------------------------------------------- -->
-
-## Ignore everything below this line
-
-ELF file analyzers:
-- arm-none-eabi-objdump
-- arm-none-eabi-readelf
-- arm-none-eabi-nm
-
-
-Create a minimal C source file. This is an example file from https://en.wikipedia.org/wiki/Nm_(Unix).
-
-~~~c
-int global_var;
-int global_var_init = 26;
-
-static int static_var;
-static int static_var_init = 25;
-
-static int static_function()
-{
-  return 0;
-}
-
-int global_function(int p)
-{
-  static int local_static_var;
-  static int local_static_var_init=5;
-
-  local_static_var = p;
-
-  return local_static_var_init + local_static_var;
-}
-
-int main(void)
-{
-  global_var = 1;
-  static_var = 2;
-
-  return 0;
-}
-~~~
-
-Compile the source file with the appropriate compiler, including the appropriate
-compiler flags.
-
-In this case that would be the ARM gcc compiler supplied by ST.
-
-~~~
-arm-none-eabi-gcc -march=armv7-m -mcpu=cortex-m3 -mthumb -c main.c -o main.o
-~~~
-
-Consult the document ***Using the GNU Compiler Collection***[^2] for the
-flags to use. In this case, because the target microcontroller is a 
-STM32F100R8, we use:
-
-<table>
-  <tr>
-    <td>-march=armv7-m</td>
-    <td><i>specifies the name of the target ARM architecture</i></td>
-  </tr>
-  <tr>
-    <td>-mcpu=cortex-m3</td>
-    <td><i>specifies the name of the target ARM processor</i></td>
-  </tr>
-  <tr>
-    <td>-mthumb</td>
-    <td><i>generate code that executes in the Thumb state</i></td>
-  </tr>
-</table>
-
-This will create the relocatable object file `main.o`.
-
-This, of course, does nothing because it has not been linked with the necessary
-startup code. Still we can use some of the binary utilities tools to look at the code generated.
-
-For this we can use:
-
-- `nm` lists the *symbols* from object files
-- `objdump` displays information about one or more object files
-- `readelf` displays information about one or more ELF format object files
-
-The next example is displaying the symbols using `nm`.
 
 ~~~
 $ /opt/st/stm32cubeclt_1.17.0/GNU-tools-for-STM32/bin/arm-none-eabi-nm -f sysv main.o
@@ -354,59 +368,7 @@ SYMBOL TABLE:
 
 <!-- main.o ELF output ----------------------------------------------------- -->
 
-## main.o ELF 
-
-~~~c
-00000000: 7f45 4c46 0101 0100 0000 0000 0000 0000  .ELF............
-00000010: 0100 2800 0100 0000 0000 0000 0000 0000  ..(.............
-00000020: 9401 0000 0000 0005 3400 0000 0000 2800  ........4.....(.
-00000030: 0900 0800 80b4 00af fee7 0047 4343 3a20  ...........GCC: 
-00000040: 2847 4e55 2054 6f6f 6c73 2066 6f72 2053  (GNU Tools for S
-00000050: 544d 3332 2031 322e 332e 7265 6c31 2e32  TM32 12.3.rel1.2
-00000060: 3032 3430 3932 362d 3137 3135 2920 3132  0240926-1715) 12
-00000070: 2e33 2e31 2032 3032 3330 3632 3600 412c  .3.1 20230626.A,
-00000080: 0000 0061 6561 6269 0001 2200 0000 0537  ...aeabi.."....7
-00000090: 2d4d 0006 0a07 4d09 0212 0414 0115 0117  -M....M.........
-000000a0: 0318 0119 011a 011e 0622 0100 0000 0000  ........."......
-000000b0: 0000 0000 0000 0000 0000 0000 0100 0000  ................
-000000c0: 0000 0000 0000 0000 0400 f1ff 0000 0000  ................
-000000d0: 0000 0000 0000 0000 0300 0100 0000 0000  ................
-000000e0: 0000 0000 0000 0000 0300 0200 0000 0000  ................
-000000f0: 0000 0000 0000 0000 0300 0300 0800 0000  ................
-00000100: 0000 0000 0000 0000 0000 0100 0000 0000  ................
-00000110: 0000 0000 0000 0000 0300 0400 0000 0000  ................
-00000120: 0000 0000 0000 0000 0300 0500 0b00 0000  ................
-00000130: 0100 0000 0600 0000 1200 0100 006d 6169  .............mai
-00000140: 6e2e 6300 2474 006d 6169 6e00 002e 7379  n.c.$t.main...sy
-00000150: 6d74 6162 002e 7374 7274 6162 002e 7368  mtab..strtab..sh
-00000160: 7374 7274 6162 002e 7465 7874 002e 6461  strtab..text..da
-00000170: 7461 002e 6273 7300 2e63 6f6d 6d65 6e74  ta..bss..comment
-00000180: 002e 4152 4d2e 6174 7472 6962 7574 6573  ..ARM.attributes
-00000190: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-000001a0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-000001b0: 0000 0000 0000 0000 0000 0000 1b00 0000  ................
-000001c0: 0100 0000 0600 0000 0000 0000 3400 0000  ............4...
-000001d0: 0600 0000 0000 0000 0000 0000 0200 0000  ................
-000001e0: 0000 0000 2100 0000 0100 0000 0300 0000  ....!...........
-000001f0: 0000 0000 3a00 0000 0000 0000 0000 0000  ....:...........
-00000200: 0000 0000 0100 0000 0000 0000 2700 0000  ............'...
-00000210: 0800 0000 0300 0000 0000 0000 3a00 0000  ............:...
-00000220: 0000 0000 0000 0000 0000 0000 0100 0000  ................
-00000230: 0000 0000 2c00 0000 0100 0000 3000 0000  ....,.......0...
-00000240: 0000 0000 3a00 0000 4400 0000 0000 0000  ....:...D.......
-00000250: 0000 0000 0100 0000 0100 0000 3500 0000  ............5...
-00000260: 0300 0070 0000 0000 0000 0000 7e00 0000  ...p........~...
-00000270: 2d00 0000 0000 0000 0000 0000 0100 0000  -...............
-00000280: 0000 0000 0100 0000 0200 0000 0000 0000  ................
-00000290: 0000 0000 ac00 0000 9000 0000 0700 0000  ................
-000002a0: 0800 0000 0400 0000 1000 0000 0900 0000  ................
-000002b0: 0300 0000 0000 0000 0000 0000 3c01 0000  ............<...
-000002c0: 1000 0000 0000 0000 0000 0000 0100 0000  ................
-000002d0: 0000 0000 1100 0000 0300 0000 0000 0000  ................
-000002e0: 0000 0000 4c01 0000 4500 0000 0000 0000  ....L...E.......
-000002f0: 0000 0000 0100 0000 0000 0000 0a         .............
-~~~
 
 <!-- Appendix -------------------------------------------------------------- -->
-[^1]: https://www.st.com/en/evaluation-tools/stm32vldiscovery.html
-[^2]: https://gcc.gnu.org/onlinedocs/
+[^1]: https://www.st.com/en/evaluation-tools/nucleo-f031k6.html
+[^2]: https://github.com/STMicroelectronics/cmsis-device-f0/

@@ -12,8 +12,10 @@ SRCDIR		=
 CFLAGS		= -march=armv6-m 
 CFLAGS 	 += -mcpu=cortex-m0 
 CFLAGS 	 += -mthumb
-CFLAGS   += -std=gnu17
+CFLAGS   += -std=gnu11
 CFLAGS   += -Wall
+CFLAGS	 += -O0
+CFLAGS	 += -g -ggdb
 
 LFLAGS    = -nostdlib
 LFLAGS   += -Tstm32f031k6.ld

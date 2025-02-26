@@ -1,4 +1,6 @@
 
+ENTRY(Reset_Handler)
+
 /* 
  *  Flash memory location and size
  */

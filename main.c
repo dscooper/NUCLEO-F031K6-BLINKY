@@ -22,6 +22,11 @@ uint32_t  tick_count      = 0;
 //
 int main(void)
 {
+
+  v32var  = c32var;
+  v16var  = c16var;
+  v8var   = c8var;
+
   while(1)
   {
     ;
