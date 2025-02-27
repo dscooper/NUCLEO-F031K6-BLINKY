@@ -3,7 +3,9 @@
  */
 #include  <stdint.h>
 #include  "startup_stm32f031k6.h"
+#include  "system_stm32f0xx.h"
 #include  "main.h"
+#include  "systick.h"
 
 /*
  *  For the STM32F031K6 microcontroller there are 4kB of SRAM
@@ -138,6 +140,10 @@ void Reset_Handler(void)
     *p_dest++ = 0;
   }
  
+  // call the module initialization
+  SystemInit();
+
+  // call the main application
   main();
 } // Reset_Handler
 
