@@ -1,0 +1,33 @@
+{
+  //
+  //  Build tasks calling the makefile to either build all or clean the project
+  //  see: https://www.youtube.com/watch?v=jcy5TpbXfAY
+  //
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build all",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "command": "make",
+      "args": [
+        "all"
+      ],
+    },
+    {
+      "label": "Build clean",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "command": "make",
+      "args": [
+        "clean"
+      ],
+    }
+  ],
+}

@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/inc/cmsis",
+                "/opt/st/stm32cubeclt_1.17.0/GNU-tools-for-STM32/lib/gcc/arm-none-eabi/12.3.1/include/"
+            ],
+            "defines": [],
+            "cStandard": "c11",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
