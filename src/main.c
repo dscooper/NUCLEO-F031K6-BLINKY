@@ -14,9 +14,11 @@ volatile uint32_t systick_timeout_flag = 0ul;
 //
 int main(void)
 {
-  // Calculate the SystemCoreClock variable
-  SystemCoreClockUpdate();
-  
+  /* This part of CMSIS-Core is not used in this simple example
+   // Calculate the SystemCoreClock variable
+   SystemCoreClockUpdate();
+   */
+
   // Initialize the SysTick module
   SysTick_Init();
 

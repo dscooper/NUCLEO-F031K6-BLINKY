@@ -140,8 +140,10 @@ void Reset_Handler(void)
     *p_dest++ = 0;
   }
  
-  // call the module initialization
-  SystemInit();
+  /* This part of CMSIS-Core is not used in this simple example
+   // call the module initialization
+   SystemInit(); // CMSIS system initialization
+   */
 
   // call the main application
   main();

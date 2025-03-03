@@ -7,6 +7,12 @@
 //#include  "system_stm32f4xx.h"        // SystemCoreClock
 //#include  "core_cm4.h"                // SysTick_Config
 
+/*
+ * The SystemCoreClock variable is defined in system_stm32f0xx.h
+ * which is not included in the build
+ */
+uint32_t SystemCoreClock = 8000000;    // 8MHz
+
 // defined in main.c
 extern volatile uint32_t systick_timeout_flag;
 
